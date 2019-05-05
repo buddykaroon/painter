@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication , QMainWindow, QMenuBar, QMenu, QAction
-from PyQt5.QtGui import QIcon, QImage, QPainter, QPen, QTabletEvent
+from PyQt5.QtGui import QIcon, QImage, QPainter, QPen, QTabletEvent, QColor, QLinearGradient
 from PyQt5.QtCore import Qt, QPoint
 import sys
 
@@ -18,9 +18,10 @@ class Window(QMainWindow):
         self.image.fill(Qt.white)
         self.baseSize = 2
         self.drawing = False
-        self.brushSize = 2
-        self.brushColor = Qt.black
+        self.brushSize = 15
+        self.brushColor = (QColor(0, 0, 0, 160))
         self.lastPoint = QPoint()
+        self.tempColor = QColor(0, 0, 0, 160)
 
         mainMenu = self.menuBar()
         fileMenu = mainMenu.addMenu("File")
@@ -59,7 +60,7 @@ class Window(QMainWindow):
         self.pen_x = tabletEvent.globalX()
         self.pen_y = tabletEvent.globalY()
         self.pen_pressure = int(tabletEvent.pressure() * 100)
-        self.brushSize = self.baseSize + ((self.pen_pressure + 1)/20)
+        self.brushColor = (QColor(0, 0, 0, self.pen_pressure * 2.55))
         print(self.pen_pressure)
         if tabletEvent.type() == QTabletEvent.TabletPress:
             self.pen_is_down = True
@@ -67,26 +68,42 @@ class Window(QMainWindow):
         elif tabletEvent.type() == QTabletEvent.TabletMove:
             self.pen_is_down = True
             print("TabletMove event")
+
+
         elif tabletEvent.type() == QTabletEvent.TabletRelease:
             self.pen_is_down = False
             print("TabletRelease event")
+
         if self.pen_is_down:
             print(" Pen is down.")
         else:
             print(" Pen is up.")
         tabletEvent.accept()
         self.update()
-
     def mousePressEvent (self, event):
         if event.button() == Qt.LeftButton:
             self.drawing = True;
             self.lastPoint = event.pos();
             print(self.lastPoint)
     def mouseMoveEvent(self, event):
+            # MAKESHIFT code that fixes the coder issue.
         if (event.buttons() & Qt.LeftButton) & self.drawing:
+            self.tempColor =(QColor(255, 255, 255, 255 - ( self.pen_pressure * 2.55)))
             painter = QPainter(self.image)
             painter.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
             painter.drawLine(self.lastPoint, event.pos())
+
+            painter.save()
+            painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+            painter.drawEllipse(self.lastPoint, self.brushSize, self.brushSize)
+            painter.restore()
+
+            # painter.drawPoint(100,100)
+            # painter.drawPoint(event.pos())
+            # painter.setPen(QPen(self.tempColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            # painter.drawPoint(100,100)
+
+            print("DRAWN")
             self.lastPoint = event.pos()
             self.update()
     def mouseReleaseEvent(self, event):
@@ -95,6 +112,7 @@ class Window(QMainWindow):
     def paintEvent(self, event):
         canvasPainter = QPainter(self)
         canvasPainter.drawImage(self.rect(), self.image, self.image.rect())
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
