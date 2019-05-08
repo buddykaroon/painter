@@ -14,19 +14,23 @@ class Window(QMainWindow):
         self.setWindowTitle("Paint Application")
         self.setWindowIcon(QIcon(icon))
         self.setGeometry(top, left, width, height)
+        self.imageTemp = QImage(self.size(), QImage.Format_ARGB32)
         self.imageAbove = QImage(self.size(), QImage.Format_ARGB32)
         self.image = QImage(self.size(), QImage.Format_RGB32)
-        self.image.fill(Qt.red)
+        self.image.fill(Qt.white)
         self.imageAbove.fill(Qt.transparent)
+        self.imageTemp.fill(Qt.transparent)
         self.baseSize = 2
         self.drawing = False
         self.brushSize = 15
-        self.brushColor = (QColor(0, 0, 255, 5))
+        self.brushColor = (QColor(0, 0, 0, 0.01))
         self.lastPoint = QPoint()
-        self.tempColor = QColor(0, 0, 0, 160)
+        self.tempColor = QColor(0, 0, 0, 1)
         self.pen_pressure = 90
+        self.strokeCount = 0
         self.line = QLine(0,0,1,1)
         self.painter = QPainter(self.image)
+        self.painterSim = QPainter(self.imageTemp)
         mainMenu = self.menuBar()
         fileMenu = mainMenu.addMenu("File")
         brushMenu = mainMenu.addMenu("Brush Size")
@@ -65,7 +69,7 @@ class Window(QMainWindow):
         self.pen_x = tabletEvent.globalX()
         self.pen_y = tabletEvent.globalY()
         self.pen_pressure = int(tabletEvent.pressure() * 100)
-        self.brushColor = (QColor(0, 0, 255,  self.pen_pressure * 2.55))
+        self.brushColor = (QColor(0, 0, 0,  self.pen_pressure * 2.55))
         print(self.pen_pressure)
         if tabletEvent.type() == QTabletEvent.TabletPress:
             self.pen_is_down = True
@@ -76,9 +80,13 @@ class Window(QMainWindow):
         elif tabletEvent.type() == QTabletEvent.TabletRelease:
             self.pen_is_down = False
             print("TabletRelease event")
-            self.painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
             empty = QPoint(0,0)
+            self.painter.drawImage(empty, self.imageTemp)
+            self.painter.drawImage(empty, self.imageAbove)
+            self.imageAbove.fill(Qt.transparent)
+            self.painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
             self.painter.drawImage(empty , self.image)
+            self.painterSim.drawImage(empty, self.image) #Save state
 
         if self.pen_is_down:
             print(" Pen is down.")
@@ -95,31 +103,15 @@ class Window(QMainWindow):
     def mouseMoveEvent(self, event):
             # MAKESHIFT code that fixes the coder issue.
         if (event.buttons() & Qt.LeftButton) & self.drawing:
-           # # self.tempColor =(QColor(255, 255, 255, 255 - ( self.pen_pressure * 2.55)))
-           # newR = a - r
-           # newG = a - g
-           # newB = a - b
-
-            # painter.setOpacty(0.5)
-            # # painter.save()
-            # self.painter.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
             self.line = QLine(self.lastPoint, event.pos())
             painterTemp = QPainter(self.imageAbove)
             painterTemp.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
             painterTemp.setCompositionMode(QPainter.CompositionMode_Source)
             painterTemp.drawLine(self.line)
             self.painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            painterTemp.end()
             empty = QPoint(0,0)
             self.painter.drawImage(empty, self.imageAbove)
-
-            painterTemp.eraseRect(QRect(0, 0, 400, 600))
-            painterTemp.end()
-            # painter.eraseRect(r)
-            # painter.restore()
-            # painter.drawPoint(100,100)
-            # #CompositionMode_SourceOver
-            # painter.setPen(QPen(self.tempColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-            # painter.drawPoint(event.pos())
             self.lastPoint = event.pos()
             self.update()
     def mouseReleaseEvent(self, event):
