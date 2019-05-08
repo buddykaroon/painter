@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication , QMainWindow, QMenuBar, QMenu, QAction, QGraphicsItem
+from PyQt5.QtWidgets import QApplication , QMainWindow, QMenuBar, QMenu, QAction, QGraphicsItem, QFileDialog
 from PyQt5.QtGui import QIcon, QImage, QPainter, QPen, QTabletEvent, QColor, QLinearGradient
 from PyQt5.QtCore import Qt, QPoint, QRect, QSize, QLine
 import sys
@@ -23,7 +23,7 @@ class Window(QMainWindow):
         self.baseSize = 2
         self.drawing = False
         self.brushSize = 15
-        self.brushColor = (QColor(0, 0, 0, 0.01))
+        self.brushColor = (QColor(0, 0, 0, 100))
         self.lastPoint = QPoint()
         self.tempColor = QColor(0, 0, 0, 1)
         self.pen_pressure = 90
@@ -38,18 +38,22 @@ class Window(QMainWindow):
 
         saveAction = QAction(QIcon("exit.png"), "Save", self)
         saveAction.setShortcut("Ctrl+S")
+        saveAction.triggered.connect(self.save)
         fileMenu.addAction(saveAction)
 
         clearAction = QAction(QIcon("exit.png"), "Clear", self)
         clearAction.setShortcut("Ctrl+C")
+        clearAction.triggered.connect(self.clear)
         fileMenu.addAction(clearAction)
 
         threepxAction = QAction(QIcon("exit.png"), "Three px", self)
         threepxAction.setShortcut("Ctrl+T")
         brushMenu.addAction(threepxAction)
+
         sixpxAction = QAction(QIcon("exit.png"), "Six px", self)
         sixpxAction.setShortcut("Ctrl+T")
         brushMenu.addAction(sixpxAction)
+
         ninepxAction = QAction(QIcon("exit.png"), "Nine px", self)
         ninepxAction.setShortcut("Ctrl+T")
         brushMenu.addAction(ninepxAction)
@@ -57,9 +61,11 @@ class Window(QMainWindow):
         blackAction = QAction(QIcon("exit.png"), "Black Color", self)
         blackAction.setShortcut("Ctrl+T")
         brushColor.addAction(blackAction)
+
         whiteAction = QAction(QIcon("exit.png"), "White Color", self)
         whiteAction.setShortcut("Ctrl+T")
         brushColor.addAction(whiteAction)
+
         redAction = QAction(QIcon("exit.png"), "Red Color", self)
         redAction.setShortcut("Ctrl+T")
         brushColor.addAction(redAction)
@@ -81,7 +87,7 @@ class Window(QMainWindow):
             self.pen_is_down = False
             print("TabletRelease event")
             empty = QPoint(0,0)
-            self.painter.drawImage(empty, self.imageTemp)
+            self.painter.drawImage(empty, self.imageTemp) #Draw save state
             self.painter.drawImage(empty, self.imageAbove)
             self.imageAbove.fill(Qt.transparent)
             self.painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
@@ -101,25 +107,41 @@ class Window(QMainWindow):
             self.lastPoint = event.pos()
             print(self.lastPoint)
     def mouseMoveEvent(self, event):
-            # MAKESHIFT code that fixes the coder issue.
+            # MAKESHIFT code that "fixes" the coder issue.
         if (event.buttons() & Qt.LeftButton) & self.drawing:
             self.line = QLine(self.lastPoint, event.pos())
             painterTemp = QPainter(self.imageAbove)
             painterTemp.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
             painterTemp.setCompositionMode(QPainter.CompositionMode_Source)
             painterTemp.drawLine(self.line)
+
+            # newColor  = (QColor(255,255,255, self.pen_pressure * 2.55))
+            # painterTemp.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            # painterTemp.setCompositionMode(QPainter.CompositionMode_Source)
+            # painterTemp.drawPoint(event.pos())
             self.painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
             painterTemp.end()
             empty = QPoint(0,0)
             self.painter.drawImage(empty, self.imageAbove)
             self.lastPoint = event.pos()
             self.update()
+
     def mouseReleaseEvent(self, event):
         if (event.button() == Qt.LeftButton):
             self.drawing = False
     def paintEvent(self, event):
         canvasPainter = QPainter(self)
         canvasPainter.drawImage(self.rect(), self.image, self.image.rect())
+    def save(self):
+        filePath, _= QFileDialog.getSaveFileName(self, "Save Image", "", "PNG(*.png);;JPG(*.jpg *.jpeg);; ALL File(*.*)")
+        if filePath == "":
+            return
+        else:
+            self.image.save(filePath)
+    def clear(self):
+        self.image.fill(Qt.white)
+        self.imageTemp.fill(Qt.white)
+        self.update()
 
 
 if __name__ == "__main__":
