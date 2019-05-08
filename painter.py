@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication , QMainWindow, QMenuBar, QMenu, QAction, QGraphicsItem, QFileDialog
-from PyQt5.QtGui import QIcon, QImage, QPainter, QPen, QTabletEvent, QColor, QLinearGradient
+from PyQt5.QtGui import QIcon, QImage, QPainter, QPen, QTabletEvent, QColor, QLinearGradient, QRegion
 from PyQt5.QtCore import Qt, QPoint, QRect, QSize, QLine
 import sys
 
@@ -23,7 +23,7 @@ class Window(QMainWindow):
         self.baseSize = 2
         self.drawing = False
         self.brushSize = 15
-        self.brushColor = (QColor(0, 0, 0, 100))
+        self.brushColor = (QColor(255, 0, 0, 50))
         self.lastPoint = QPoint()
         self.tempColor = QColor(0, 0, 0, 1)
         self.pen_pressure = 90
@@ -69,7 +69,32 @@ class Window(QMainWindow):
         redAction = QAction(QIcon("exit.png"), "Red Color", self)
         redAction.setShortcut("Ctrl+T")
         brushColor.addAction(redAction)
+        empty = QPoint(0,0)
+        point2 = QPoint(100,100)
+        point3 = QPoint(200,150)
+        point4 = QPoint(300,175)
+        point5 = QPoint(400,150)
+        point6 = QPoint(500,175)
+        self.painter.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        self.painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        self.line = QLine(empty, point2)
+        self.painter.drawLine(self.line)
 
+        self.painter.setPen(QPen(Qt.transparent, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        self.painter.setCompositionMode(QPainter.CompositionMode_Source)
+        self.painter.drawPoint(point3)
+
+        self.painter.setCompositionMode(QPainter.CompositionMode_SourceOut)
+        self.line = QLine(point2, point3)
+        self.painter.drawLine(self.line)
+        self.painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        self.painter.drawPoint(point4)
+        self.painter.setCompositionMode(QPainter.CompositionMode_SourceOut)
+        self.line = QLine(point3, point4)
+        self.painter.drawLine(self.line)
+        self.painter.setCompositionMode(QPainter.CompositionMode_SourceOut)
+        self.line = QLine(point4, point5)
+        self.painter.drawLine(self.line)
     def tabletEvent(self, tabletEvent):
         print("hello")
         self.pen_x = tabletEvent.globalX()
@@ -90,6 +115,7 @@ class Window(QMainWindow):
             self.painter.drawImage(empty, self.imageTemp) #Draw save state
             self.painter.drawImage(empty, self.imageAbove)
             self.imageAbove.fill(Qt.transparent)
+            self.strokeCount = 0
             self.painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
             self.painter.drawImage(empty , self.image)
             self.painterSim.drawImage(empty, self.image) #Save state
@@ -111,11 +137,23 @@ class Window(QMainWindow):
         if (event.buttons() & Qt.LeftButton) & self.drawing:
             self.line = QLine(self.lastPoint, event.pos())
             painterTemp = QPainter(self.imageAbove)
-            painterTemp.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-            painterTemp.setCompositionMode(QPainter.CompositionMode_Source)
-            painterTemp.drawLine(self.line)
+            c = self.image.pixel(event.pos())
 
-            # newColor  = (QColor(255,255,255, self.pen_pressure * 2.55))
+
+            painterTemp.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            if (self.strokeCount == 0):
+                painterTemp.setCompositionMode(QPainter.CompositionMode_SourceOver)
+                painterTemp.drawLine(self.line)
+                self.strokeCount = 1
+            else:
+                painterTemp.setPen(QPen(Qt.transparent, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+                painterTemp.setCompositionMode(QPainter.CompositionMode_Source)
+                painterTemp.drawPoint(event.pos())
+                painterTemp.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+                painterTemp.setCompositionMode(QPainter.CompositionMode_SourceOut)
+                painterTemp.drawLine(self.line)
+
+            self.brushColor = Qt.transparent
             # painterTemp.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
             # painterTemp.setCompositionMode(QPainter.CompositionMode_Source)
             # painterTemp.drawPoint(event.pos())
