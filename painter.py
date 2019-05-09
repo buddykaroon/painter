@@ -74,10 +74,11 @@ class Window(QMainWindow):
         point3 = QPoint(200,150)
         point4 = QPoint(300,175)
         point5 = QPoint(400,150)
-        point6 = QPoint(500,175)
+
+
         self.painter.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
         self.painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-        self.line = QLine(empty, point2) 
+        self.line = QLine(empty, point2)
 
         painterTemp = QPainter(self.imageAbove)
         painterTemp.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
@@ -138,9 +139,6 @@ class Window(QMainWindow):
         if (event.buttons() & Qt.LeftButton) & self.drawing:
             self.line = QLine(self.lastPoint, event.pos())
             painterTemp = QPainter(self.imageAbove)
-            c = self.image.pixel(event.pos())
-
-
             painterTemp.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
             if (self.strokeCount == 0):
                 painterTemp.setCompositionMode(QPainter.CompositionMode_SourceOver)
@@ -153,10 +151,8 @@ class Window(QMainWindow):
                 self.painterSim.setPen(QPen(Qt.transparent, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
                 self.painterSim.setCompositionMode(QPainter.CompositionMode_Source)
                 self.painterSim.drawPoint(event.pos())
+
             self.brushColor = Qt.transparent
-            # painterTemp.setPen(QPen(self.brushColor, self.brushSize, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-            # painterTemp.setCompositionMode(QPainter.CompositionMode_Source)
-            # painterTemp.drawPoint(event.pos())
             self.painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
             painterTemp.end()
             empty = QPoint(0,0)
